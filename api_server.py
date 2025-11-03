@@ -2,7 +2,7 @@ import cv2
 import os
 import math  # For distance calculation
 import numpy as np  # Added for creating error frames
-from flask import Flask, Response, jsonify, request
+from flask import Flask, Response, jsonify, request, render_template
 from flask_cors import CORS
 from ultralytics import YOLO
 import threading
@@ -229,10 +229,14 @@ def api_status():
         occupied=current_status["occupied"],
         direction=current_status.get("direction", "N/A")
     )
+    @app.route('/')
+def index():
+    return render_template('features.html')
 
 if __name__ == '__main__':
     print("--- Starting SWIFT SLOT AI Server ---")
     print(f"Model: {MODEL_PATH}")
     print(f"Available Video Sources: {list(VIDEO_SOURCES.keys())}")
     print(f"Configured Entry Points: {ENTRY_POINTS}")
+
     app.run(debug=True, threaded=True, use_reloader=False)
