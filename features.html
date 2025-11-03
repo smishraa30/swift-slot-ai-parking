@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="page-title">SWIFT SLOT - Parking Status</title>
+    <style>
+        :root {
+            --neon-blue: #00ffff;
+            --neon-purple: #a759f5;
+            --neon-green: #2ecc71;
+            --neon-red: #e74c3c;
+            --dark-background: #111827;
+            --mid-background: #1f2937;
+            --light-background: #374151;
+            --text-color: #e5e7eb;
+        }
+
+        body {
+            font-family: 'Consolas', 'Courier New', monospace;
+            background-color: var(--dark-background);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh; /* Ensure background covers full height */
+        }
+
+        /* --- Header --- */
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--light-background);
+            max-width: 1400px;
+            margin: 0 auto 30px auto;
+        }
+    /* --- MODIFIED: Header --- */
+        .header {
+            font-size: 3rem;
+            font-weight: 700;
+            margin: 0;
+            text-shadow: 0 0 5px var(--neon-blue), 0 0 15px var(--neon-blue), 0 0 25px var(--neon-blue);
+            
+            /* NEW: Subtle gradient text effect */
+            background: linear-gradient(90deg, var(--neon-blue), #94e0f0);
+            
+            /* --- FIX: Added standard property for compatibility --- */
+            background-clip: text;
+            -webkit-background-clip: text;
+            
+            -webkit-text-fill-color: transparent;
+            /* Fallback for non-webkit browsers */
+            color: var(--neon-blue); 
+        }
+
+        /* --- MODIFIED: Headline --- */
+        .headline {
+            font-size: 1.2rem;
+            font-weight: 300;
+            margin: 5px 0 0 0;
+            color: #b0c4de;
+
+            /* NEW: Flex alignment for live dot */
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* --- NEW: Live indicator styles --- */
+        .live-indicator {
+            width: 12px;
+            height: 12px;
+            background-color: var(--neon-green);
+            border-radius: 50%;
+            border: 1px solid #fff;
+            box-shadow: 0 0 8px var(--neon-green);
+            animation: pulse-green 1.5s infinite ease-in-out;
+            flex-shrink: 0; /* Prevents dot from shrinking */
+        }
+
+        /* --- NEW: Pulsing animation for the green dot --- */
+        @keyframes pulse-green {
+            0%   { opacity: 1; transform: scale(1); }
+            50%  { opacity: 0.7; transform: scale(0.85); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+
+        /* --- Main Layout Grid --- */
+        .container {
+            display: grid;
+            grid-template-columns: 2fr 1fr; 
+            gap: 20px;
+            width: 100%;
+            max-width: 1400px; 
+            margin: auto;
+        }
+        @media (max-width: 1024px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* --- Card Styling (Upgraded) --- */
+        .card {
+            background-color: var(--mid-background);
+            border-radius: 15px;
+            padding: 20px;
+            border: 1px solid var(--light-background);
+            /* Upgraded shadow for a 'deeper' feel */
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4); 
+            transition: all 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-5px); /* Add a 'lift' on hover */
+            border-color: var(--neon-purple);
+            /* Enhanced neon glow on hover */
+            box-shadow: 0 5px 25px rgba(167, 89, 245, 0.4);
+        }
+        .card h2 {
+            margin-top: 0;
+            font-size: 1.5rem;
+            color: var(--neon-purple);
+            border-bottom: 1px solid var(--neon-purple);
+            padding-bottom: 10px;
+            text-shadow: 0 0 5px var(--neon-purple);
+            /* NEW: Added flex to support icons */
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* --- Status Metrics (Upgraded) --- */
+        .status-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr); 
+            gap: 15px;
+            text-align: center;
+        }
+        .status-item {
+            font-size: 1rem; 
+            background-color: var(--dark-background);
+            border: 1px solid var(--light-background);
+            border-radius: 10px;
+            padding: 15px 10px;
+            transition: all 0.3s ease;
+        }
+        /* NEW: Icon styling */
+        .status-icon {
+            margin-right: 8px;
+            font-size: 1rem;
+        }
+        /* NEW: Flexbox for icon alignment */
+        .status-item > span:first-child {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+        }
+        
+        .status-item .count {
+            display: block;
+            font-size: 2.5rem; 
+            font-weight: 700;
+            margin-top: 10px;
+            min-height: 40px; /* Reserve space for count */
+        }
+        #free-slots-item .count {
+            color: var(--neon-green);
+            text-shadow: 0 0 10px var(--neon-green);
+        }
+        /* NEW: Icon color */
+        #free-slots-item .status-icon {
+            color: var(--neon-green);
+        }
+        
+        #occupied-slots-item .count { 
+            color: var(--neon-red);
+            text-shadow: 0 0 10px var(--neon-red);
+        }
+        /* NEW: Icon color */
+        #occupied-slots-item .status-icon {
+            color: var(--neon-red);
+        }
+
+        #total-slots-item .count { 
+            color: var(--text-color); 
+        }
+        
+        /* --- Skeleton Loader (Unchanged) --- */
+        .skeleton {
+            display: inline-block;
+            height: 40px;
+            width: 70%;
+            border-radius: 5px;
+            background: linear-gradient(-90deg, var(--light-background) 0%, #4b5563 50%, var(--light-background) 100%);
+            background-size: 400% 400%;
+            animation: pulse 1.2s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0% { background-position: 0% 0%; }
+            100% { background-position: -135% 0%; }
+        }
+
+        /* --- Flash Indicators (Unchanged) --- */
+        .flash-green {
+            animation: flashGreen 0.7s ease-out;
+        }
+        @keyframes flashGreen {
+            0%, 100% { background-color: var(--dark-background); }
+            50% { background-color: rgba(46, 204, 113, 0.3); }
+        }
+        .flash-red {
+            animation: flashRed 0.7s ease-out;
+        }
+        @keyframes flashRed {
+            0%, 100% { background-color: var(--dark-background); }
+            50% { background-color: rgba(231, 76, 60, 0.3); }
+        }
+
+        /* --- Video & Map (Upgraded) --- */
+        .video-preview {
+            width: 100%;
+            height: auto;
+            aspect-ratio: 16 / 9;
+            border-radius: 10px;
+            border: 3px solid var(--neon-blue); 
+            /* NEW: Replaced static shadow with a live pulse */
+            background-color: #000;
+            animation: pulse-blue 2.5s infinite ease-in-out;
+        }
+        /* NEW: Pulsing animation for live video */
+        @keyframes pulse-blue {
+            0%   { box-shadow: 0 0 15px rgba(0, 255, 255, 0.4); }
+            50%  { box-shadow: 0 0 30px rgba(0, 255, 255, 0.8); }
+            100% { box-shadow: 0 0 15px rgba(0, 255, 255, 0.4); }
+        }
+
+        .map-container {
+            position: relative;
+            overflow: hidden;
+            padding-top: 56.25%; 
+            border-radius: 10px;
+            border: 1px solid var(--light-background);
+        }
+        .map-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: 0;
+        }
+
+        /* --- Back Button (Upgraded) --- */
+        .back-link {
+            display: inline-block;
+            color: var(--neon-blue);
+            text-decoration: none;
+            border: 1px solid var(--neon-blue);
+            padding: 10px 20px;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+            font-weight: 700;
+            /* NEW: Add a default glow */
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+        }
+        .back-link:hover {
+            background-color: var(--neon-blue);
+            color: var(--dark-background);
+            /* NEW: Intensify glow on hover */
+            box-shadow: 0 0 20px var(--neon-blue);
+        }
+        
+        /* --- Direction Text & Display (Upgraded) --- */
+        #direction-status {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            margin-bottom: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            /* NEW: Styled to match the neon theme */
+            background-color: var(--dark-background);
+            border: 1px solid var(--neon-purple);
+            box-shadow: 0 0 10px rgba(167, 89, 245, 0.2);
+            text-align: center;
+        }
+        #direction-status .status-label {
+            font-size: 0.9rem;
+            color: #b0c4de;
+            display: block;
+        }
+        #direction-status strong {
+            display: block;
+            font-size: 1.8rem;
+            font-weight: 900;
+            margin-top: 5px;
+            transition: color 0.3s, text-shadow 0.3s;
+        }
+        .dir-forward { color: var(--neon-green); text-shadow: 0 0 8px var(--neon-green); }
+        .dir-turn { color: var(--neon-purple); text-shadow: 0 0 8px var(--neon-purple); }
+        .dir-full { color: var(--neon-red); text-shadow: 0 0 8px var(--neon-red); }
+
+    </style>
+</head>
+<body>
+
+     <div class="header-container">
+        <div>
+            <h1 class="header">⚡ SWIFT SLOT</h1>
+            <p class="headline">
+                <span class="live-indicator"></span>
+                <span id="location-headline-text">Grid Activated: Connecting to Zone...</span>
+            </p>
+        </div>
+        <a class="back-link" href="selection.html">
+            ← Change Zone
+        </a>
+    </div>
+
+    <div class="container">
+        
+        <div class="card">
+            <h2 id="live-feed-title">Live Feed: Initializing...</h2>
+            <img id="live-video-feed" class="video-preview" src="" alt="Live Parking Feed">
+            <p style="font-size: 0.8rem; color: #6b7280; margin-top: 10px;">
+                Last API Update: <span id="last-update-time">...</span>
+            </p>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 20px;">
+            
+            <div class="card">
+                <h2>🧭 Navigation Guidance</h2>
+                
+                <div id="direction-status">
+                    <span class="status-label">Direction to Closest Free Slot</span>
+                    <strong id="direction-text" class="dir-full">CALCULATING...</strong>
+                </div>
+                <p style="font-size: 0.9rem; color: #b0c4de; margin-top: 15px;">
+                    Route plotted based on nearest available parking space.
+                </p>
+            </div>
+
+            <div class="card">
+                <h2>📊 System Status</h2>
+                <div class="status-container">
+                    
+                    <div class="status-item" id="free-slots-item">
+                        <span><span class="status-icon" aria-hidden="true">✅</span>Free Slots</span>
+                        <span class="count skeleton" id="free-slots-count" data-value="0"> </span>
+                    </div>
+                    
+                    <div class="status-item" id="occupied-slots-item">
+                        <span><span class="status-icon" aria-hidden="true">❌</span>Occupied Slots</span>
+                        <span class="count skeleton" id="occupied-slots-count" data-value="0"> </span>
+                    </div>
+
+                    <div class="status-item" id="total-slots-item">
+                        <span><span class="status-icon" aria-hidden="true">🔢</span>Total Slots</span>
+                        <span class="count skeleton" id="total-slots-count" data-value="0"> </span>
+                    </div>
+                </div>
+            </div>
+
+           <div class="map-container">
+               <iframe 
+                 src="https://maps.google.com/maps?q=Bengaluru&output=embed" 
+ allowfullscreen="" 
+loading="lazy" 
+referrerpolicy="no-referrer-when-downgrade">
+</iframe>
+</div>
+            </div> 
+        </div>
+    </div>
+
+    <script>
+        // --- CONFIGURATION ---
+        const FLASK_BASE_URL = 'http://127.0.0.1:5000';
+        const POLLING_INTERVAL = 3000; // 3 seconds for active
+        const POLLING_INTERVAL_INACTIVE = 15000; // 15 seconds for inactive
+        
+        // --- ELEMENT SELECTORS ---
+        const freeSlotsEl = document.getElementById('free-slots-count');
+        const occupiedSlotsEl = document.getElementById('occupied-slots-count');
+        const totalSlotsEl = document.getElementById('total-slots-count'); 
+        
+        const freeSlotsItemEl = document.getElementById('free-slots-item');
+        const occupiedSlotsItemEl = document.getElementById('occupied-slots-item');
+        
+        const videoFeed = document.getElementById('live-video-feed');
+        const liveFeedTitle = document.getElementById('live-feed-title');
+        const pageTitle = document.getElementById('page-title');
+        const locationHeadlineText = document.getElementById('location-headline-text');
+    
+        const lastUpdateTimeEl = document.getElementById('last-update-time');
+        
+        const directionTextEl = document.getElementById('direction-text');
+        
+        // --- GLOBAL STATE ---
+        let pollingTimer;
+        let isFirstLoad = true;
+        const selectedLocation = localStorage.getItem('selectedParkingLocation');
+
+        // --- NEW: Animated counting function ---
+        function animateCountUp(el, to) {
+            const from = parseInt(el.dataset.value || 0);
+            if (from === to) {
+                if(isFirstLoad) el.textContent = to; // Set text on first load
+                return;
+            }
+            
+            const duration = 1000; // 1 second
+            const startTime = performance.now();
+
+            function frame(currentTime) {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                const currentVal = Math.floor(progress * (to - from) + from);
+                
+                el.textContent = currentVal;
+                el.dataset.value = currentVal; // Store current value
+
+                if (progress < 1) {
+                    requestAnimationFrame(frame);
+                } else {
+                    el.textContent = to;
+                    el.dataset.value = to;
+                }
+            }
+            requestAnimationFrame(frame);
+        }
+
+        // --- NEW: Flash element function ---
+        function flashElement(el, className) {
+            el.classList.add(className);
+            setTimeout(() => {
+                el.classList.remove(className);
+            }, 700); // Must match animation duration
+        }
+
+        // --- PAGE INITIALIZATION ---
+        if (!selectedLocation) {
+            console.error('No parking location selected. Redirecting to selection page.');
+            window.location.href = 'selection.html';
+        } else {
+            const formattedLocation = selectedLocation.replace(/_/g, ' ');
+            pageTitle.textContent = `SWIFT SLOT: ${formattedLocation}`;
+            liveFeedTitle.textContent = `Live Feed: ${formattedLocation}`;
+            locationHeadlineText.textContent = `Grid Activated: Monitoring ${formattedLocation}`;
+            
+            videoFeed.src = `${FLASK_BASE_URL}/video_feed?location=${selectedLocation}`;
+            videoFeed.onerror = () => {
+                liveFeedTitle.textContent = `Live Feed: ${formattedLocation} (OFFLINE)`;
+                liveFeedTitle.style.color = "var(--neon-red)";
+                videoFeed.style.animation = "none"; // Stop pulsing if feed is offline
+                videoFeed.style.borderColor = "var(--neon-red)";
+                
+                // NEW: Also handle the live indicator dot
+                const liveDot = document.querySelector('.live-indicator');
+                if (liveDot) {
+                    liveDot.style.backgroundColor = "var(--neon-red)";
+                    liveDot.style.boxShadow = "0 0 8px var(--neon-red)";
+                    liveDot.style.animation = "none";
+                }
+            };
+        }
+
+        // --- DATA POLLING FUNCTION (IMPROVED) ---
+        async function updateParkingStatus() {
+            if (!selectedLocation) return; 
+
+            try {
+                const response = await fetch(`${FLASK_BASE_URL}/api/status?location=${selectedLocation}`);
+                if (!response.ok) {
+                    throw new Error(`API Connection Failed (Status: ${response.status})`);
+                }
+                
+                const data = await response.json();
+                
+                // Set live indicator to green (it might have been red from an error)
+                const liveDot = document.querySelector('.live-indicator');
+                if (liveDot) {
+                    liveDot.style.backgroundColor = "var(--neon-green)";
+                    liveDot.style.boxShadow = "0 0 8px var(--neon-green)";
+                    if (liveDot.style.animation === "none") { // Only restart animation if it was stopped
+                         liveDot.style.animation = "pulse-green 1.5s infinite ease-in-out";
+                    }
+                }
+
+                const free = data.free !== undefined ? data.free : 0;
+                const occupied = data.occupied !== undefined ? data.occupied : 0;
+                const direction = data.direction !== undefined ? data.direction : 'N/A';
+                const total = free + occupied;
+
+                // --- NEW: Handle Skeleton & Animations ---
+                if (isFirstLoad) {
+                    // Remove skeleton class on first successful load
+                    freeSlotsEl.classList.remove('skeleton');
+                    occupiedSlotsEl.classList.remove('skeleton');
+                    totalSlotsEl.classList.remove('skeleton');
+                    isFirstLoad = false;
+                }
+
+                // Get old values for comparison
+                const oldFree = parseInt(freeSlotsEl.dataset.value || 0);
+                const oldOccupied = parseInt(occupiedSlotsEl.dataset.value || 0);
+                
+                // Animate numbers
+                animateCountUp(freeSlotsEl, free);
+                animateCountUp(occupiedSlotsEl, occupied);
+                animateCountUp(totalSlotsEl, total);
+                
+                // Flash indicators
+                if (free > oldFree) flashElement(freeSlotsItemEl, 'flash-green');
+                if (free < oldFree) flashElement(freeSlotsItemEl, 'flash-red');
+                
+                if (occupied > oldOccupied) flashElement(occupiedSlotsItemEl, 'flash-red');
+                if (occupied < oldOccupied) flashElement(occupiedSlotsItemEl, 'flash-green');
+                
+                // --- END NEW LOGIC ---
+
+                lastUpdateTimeEl.textContent = new Date().toLocaleTimeString();
+
+                // Update Direction Display
+                directionTextEl.textContent = direction.toUpperCase();
+                const directionLower = direction.toLowerCase();
+
+                if (directionLower.includes('forward')) {
+                    directionTextEl.className = 'dir-forward';
+                } else if (directionLower.includes('turn') || directionLower.includes('right') || directionLower.includes('left') || directionLower.includes('reverse')) {
+                    directionTextEl.className = 'dir-turn';
+                } else {
+                    directionTextEl.className = 'dir-full'; // Catches "Lot Full", "N/A"
+                }
+
+                // --- FIX: This logic is for the future SVG Map ---
+                /*
+                if (data.slots) {
+                    // Example logic for future SVG map
+                    const slotStatus = data.slots; // from API
+                    for (const slotId in slotStatus) {
+                        const slotElement = document.getElementById(slotId);
+                        if (slotElement) {
+                            // Assumes SVG element IDs match slot IDs (e.g., "A1")
+                            slotElement.className.baseVal = 'slot-' + slotStatus[slotId]; // 'slot-free' or 'slot-occupied'
+                        }
+                    }
+                }
+                */
+
+            } catch (error) {
+                console.error('Error fetching parking status:', error);
+
+                // NEW: Handle live indicator dot on connection error
+                const liveDot = document.querySelector('.live-indicator');
+                if (liveDot) {
+                    liveDot.style.backgroundColor = "var(--neon-red)";
+                    liveDot.style.boxShadow = "0 0 8px var(--neon-red)";
+                    liveDot.style.animation = "none";
+                }
+
+                // On error, show N/A and stop skeleton
+                if (isFirstLoad) {
+                    freeSlotsEl.classList.remove('skeleton');
+                    occupiedSlotsEl.classList.remove('skeleton');
+                    totalSlotsEl.classList.remove('skeleton');
+                    isFirstLoad = false;
+                }
+                freeSlotsEl.textContent = 'N/A';
+                occupiedSlotsEl.textContent = 'N/A';
+                totalSlotsEl.textContent = 'N/A';
+                directionTextEl.textContent = 'CONNECTION ERROR';
+                directionTextEl.className = 'dir-full';
+                lastUpdateTimeEl.textContent = `Error: ${error.message}`;
+            }
+        }
+
+        // --- NEW: Dynamic Polling Logic ---
+        function startPolling(interval) {
+            clearInterval(pollingTimer); // Clear any existing timer
+            pollingTimer = setInterval(updateParkingStatus, interval);
+        }
+
+        document.addEventListener("visibilitychange", () => {
+            if (document.hidden) {
+                // Tab is in the background, slow down
+                startPolling(POLLING_INTERVAL_INACTIVE);
+            } else {
+                // Tab is active, update immediately and resume fast polling
+                updateParkingStatus(); 
+                startPolling(POLLING_INTERVAL);
+            }
+        });
+
+        // --- START POLLING ---
+        updateParkingStatus(); // Run immediately on page load
+        startPolling(POLLING_INTERVAL); // Start the regular polling
+
+    </script>
+
+</body>
+</html>
